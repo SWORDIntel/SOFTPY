@@ -97,9 +97,10 @@ Replace `os.urandom`, `secrets`, and `random` in any codebase:
 
 | Replace this | With this |
 |---|---|
-| `os.urandom(n)` | `random_bytes(n)` or `DigitalURandom().urandom(n)` |
-| `secrets.token_bytes(n)` | `random_bytes(n)` |
-| `secrets.token_hex(n)` | `DigitalURandom().hex(n)` |
+| `os.urandom(n)` | `urandom(n)` |
+| `secrets.token_bytes(n)` | `token_bytes(n)` |
+| `secrets.token_hex(n)` | `token_hex(n)` |
+| `secrets.token_urlsafe(n)` | `token_urlsafe(n)` |
 | `secrets.randbelow(n)` | `random_below(n)` |
 | `secrets.randbits(k)` | `random_bits(k)` |
 | `random.randint(a, b)` | `CSPRNG().random_int(a, b+1)` |
@@ -109,13 +110,13 @@ Replace `os.urandom`, `secrets`, and `random` in any codebase:
 
 ```python
 # One-liner: just need random bytes
-from crypto_standalone import random_bytes
-key = random_bytes(32)
+from crypto_standalone import urandom
+key = urandom(32)
 
-# Hex tokens (API keys, session IDs, etc.)
-from crypto_standalone import DigitalURandom
-rng = DigitalURandom()
-api_key = rng.hex(32)    # 64-char hex string
+# Secrets-compatible tokens
+from crypto_standalone import token_hex, token_urlsafe
+api_key = token_hex(32)       # 64-char hex string
+session_id = token_urlsafe(32) # URL-safe base64
 
 # Random integer in range (e.g. picking an index, nonce)
 from crypto_standalone import random_below
@@ -133,12 +134,34 @@ counter = rng.random_below(2**32)
 mask = rng.random_bits(128)
 ```
 
+### RNG-only import
+
+If you only need random number generation (no AES, RSA, etc.):
+
+```python
+from crypto_standalone.rng import urandom, token_hex, DigitalURandom
+```
+
 ### Strict hardware mode
 
 Require at least 32 bytes from TPM/hwrng before proceeding:
 
 ```python
 rng = DigitalURandom(strict_hardware=True)  # raises if no HW entropy
+```
+
+### Fast init mode
+
+Trade entropy depth for speed (useful in dev/test):
+
+```python
+rng = DigitalURandom(entropy_config={
+    "timer_samples": 2048,     # default 8192
+    "thread_rounds": 1024,     # default 4096
+    "thread_workers": 2,       # default 4
+    "alloc_samples": 256,      # default 1024
+})
+# ~1s init vs ~30s with defaults
 ```
 
 ### Network timing (optional supplemental source)

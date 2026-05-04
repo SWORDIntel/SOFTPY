@@ -6,10 +6,7 @@ own sha256() and hmac_sha256() from hashing.sha2.
 
 from __future__ import annotations
 
-try:
-    from ..hashing.sha2 import sha256, hmac_sha256
-except ImportError:
-    from hashing.sha2 import sha256, hmac_sha256
+from ..hashing.sha2 import sha256, hmac_sha256
 
 
 _OUTLEN = 32  # SHA-256 output length in bytes

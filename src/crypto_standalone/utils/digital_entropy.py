@@ -23,12 +23,8 @@ import threading
 import sys
 import gc
 
-try:
-    from ..hashing.sha2 import sha256, hmac_sha256
-    from .drbg import HMAC_DRBG_SHA256
-except ImportError:
-    from hashing.sha2 import sha256, hmac_sha256
-    from drbg import HMAC_DRBG_SHA256
+from ..hashing.sha2 import sha256, hmac_sha256
+from .drbg import HMAC_DRBG_SHA256
 
 
 _MASK64 = (1 << 64) - 1
@@ -563,28 +559,58 @@ def _fast_additional_input(samples=128):
     return sha256(b"FAST-ADDITIONAL-INPUT-v2|" + bytes(raw))
 
 
+_DEFAULT_ENTROPY_CONFIG = {
+    "timer_samples": 8192,
+    "thread_rounds": 4096,
+    "thread_workers": 4,
+    "alloc_samples": 1024,
+    "hw_byte_count": 64,
+    "skip_linux_state": False,
+    "skip_timer_jitter": False,
+    "skip_thread_jitter": False,
+    "skip_allocator_jitter": False,
+}
+
+
 class DigitalURandom:
     """urandom-like object backed by pure-Python entropy collection and HMAC-DRBG.
 
     Usage:
-        rng = DigitalURandom(strict_hardware=True)
+        rng = DigitalURandom()                     # full security
         key = rng.urandom(32)
+
+        rng = DigitalURandom(entropy_config={      # fast init
+        ...     "timer_samples": 2048,
+        ...     "thread_rounds": 1024,
+        ... })
     """
 
-    def __init__(self, strict_hardware=False, use_network=False):
+    def __init__(self, strict_hardware=False, use_network=False,
+                 entropy_config=None):
+        cfg = dict(_DEFAULT_ENTROPY_CONFIG)
+        if entropy_config:
+            cfg.update(entropy_config)
+
         collector = DigitalEntropyCollector()
 
         collector.collect_runtime_state()
 
         # Best hardware paths first.
-        collector.collect_tpm2(64)
-        collector.collect_hwrng(64)
+        collector.collect_tpm2(cfg["hw_byte_count"])
+        collector.collect_hwrng(cfg["hw_byte_count"])
 
         # Software/hardware-timing supplemental sources.
-        collector.collect_linux_state()
-        collector.collect_timer_jitter(samples=8192)
-        collector.collect_thread_jitter(rounds=4096, workers=4)
-        collector.collect_allocator_jitter(samples=1024)
+        if not cfg["skip_linux_state"]:
+            collector.collect_linux_state()
+        if not cfg["skip_timer_jitter"]:
+            collector.collect_timer_jitter(samples=cfg["timer_samples"])
+        if not cfg["skip_thread_jitter"]:
+            collector.collect_thread_jitter(
+                rounds=cfg["thread_rounds"],
+                workers=cfg["thread_workers"],
+            )
+        if not cfg["skip_allocator_jitter"]:
+            collector.collect_allocator_jitter(samples=cfg["alloc_samples"])
 
         if use_network:
             collector.collect_network_timing()
@@ -602,6 +628,7 @@ class DigitalURandom:
             personalization=b"DIGITAL-URANDOM-PURE-PYTHON-v2",
         )
 
+        self._lock = threading.Lock()
         self._generated = 0
         self._collector_report = collector.report()
 
@@ -615,10 +642,11 @@ class DigitalURandom:
 
         additional = _fast_additional_input()
 
-        out = self._drbg.random_bytes(
-            n,
-            additional_input=additional,
-        )
+        with self._lock:
+            out = self._drbg.random_bytes(
+                n,
+                additional_input=additional,
+            )
 
         self._generated += n
         return out

@@ -10,6 +10,7 @@ from .kdf import hkdf, hkdf_extract, hkdf_expand, hkdf_sha256, hkdf_sha512
 from .kdf import pbkdf2_hmac, pbkdf2_sha256, pbkdf2_sha512
 from .aws import sign_aws_request, build_signed_request, send_signed_request
 from .utils import random_bytes, random_below, random_bits, CSPRNG
+from .utils import urandom, token_bytes, token_hex, token_urlsafe
 from .utils import secure_zero, SecureBytes, constant_time_compare
 from .utils import DigitalURandom, self_test, HMAC_DRBG_SHA256
 
