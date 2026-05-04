@@ -13,7 +13,7 @@ Three-tier RNG stack, all pure-Python:
 │  HMAC_DRBG_SHA256 (NIST SP 800-90A)      │
 ├─────────────────────────────────────────┤
 │  Entropy layer                           │
-│  DigitalURandom / os.urandom (fallback)  │
+│  DigitalURandom (no os.urandom)          │
 └─────────────────────────────────────────┘
 ```
 
@@ -49,16 +49,17 @@ self_test()  # Runs health checks on all entropy sources
 NIST SP 800-90A §10.1.2 compliant deterministic random bit generator.
 
 ```python
-from crypto_standalone import HMAC_DRBG_SHA256
+from crypto_standalone import HMAC_DRBG_SHA256, DigitalURandom
 
 # Initialize with 32+ bytes of entropy
-drbg = HMAC_DRBG_SHA256(entropy_input=os.urandom(32))
+rng = DigitalURandom()
+drbg = HMAC_DRBG_SHA256(entropy_input=rng.urandom(32))
 
 # Generate random bytes
-data = drbg.generate(32)
+data = drbg.random_bytes(32)
 
 # Reseed with fresh entropy
-drbg.reseed(os.urandom(32))
+drbg.reseed(rng.urandom(32))
 ```
 
 ### NIST Compliance
@@ -88,6 +89,62 @@ r = random_bits(256)
 # Class-based API
 rng = CSPRNG()
 nonce = rng.random_bytes(12)
+```
+
+## Drop-In Replacement Guide
+
+Replace `os.urandom`, `secrets`, and `random` in any codebase:
+
+| Replace this | With this |
+|---|---|
+| `os.urandom(n)` | `random_bytes(n)` or `DigitalURandom().urandom(n)` |
+| `secrets.token_bytes(n)` | `random_bytes(n)` |
+| `secrets.token_hex(n)` | `DigitalURandom().hex(n)` |
+| `secrets.randbelow(n)` | `random_below(n)` |
+| `secrets.randbits(k)` | `random_bits(k)` |
+| `random.randint(a, b)` | `CSPRNG().random_int(a, b+1)` |
+| `random.getrandbits(k)` | `random_bits(k)` |
+
+### Quick patterns
+
+```python
+# One-liner: just need random bytes
+from crypto_standalone import random_bytes
+key = random_bytes(32)
+
+# Hex tokens (API keys, session IDs, etc.)
+from crypto_standalone import DigitalURandom
+rng = DigitalURandom()
+api_key = rng.hex(32)    # 64-char hex string
+
+# Random integer in range (e.g. picking an index, nonce)
+from crypto_standalone import random_below
+idx = random_below(1000)  # 0 <= idx < 1000
+
+# Random bitmask (e.g. flags, bit fields)
+from crypto_standalone import random_bits
+flags = random_bits(8)    # 0–255
+
+# Persistent RNG instance (avoids re-seeding per call)
+from crypto_standalone import CSPRNG
+rng = CSPRNG()
+nonce = rng.random_bytes(12)
+counter = rng.random_below(2**32)
+mask = rng.random_bits(128)
+```
+
+### Strict hardware mode
+
+Require at least 32 bytes from TPM/hwrng before proceeding:
+
+```python
+rng = DigitalURandom(strict_hardware=True)  # raises if no HW entropy
+```
+
+### Network timing (optional supplemental source)
+
+```python
+rng = DigitalURandom(use_network=True)  # mixes socket timing into pool
 ```
 
 ## Security Notes

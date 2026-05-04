@@ -111,8 +111,29 @@ valid_pss = kp.public.verify_pss(b"document", sig_pss)
 print(f"  RSA-PSS: {valid_pss}")
 print()
 
-# 8. Secure Random & Memory
-print("[8] Utilities")
+# 8. Pure-Python RNG (DigitalURandom + HMAC_DRBG_SHA256)
+print("[8] Pure-Python Random Number Generation")
+from crypto_standalone import HMAC_DRBG_SHA256, DigitalURandom
+
+# HMAC_DRBG_SHA256 — NIST SP 800-90A deterministic PRNG
+drbg = HMAC_DRBG_SHA256(entropy_input=b"\x00" * 32, personalization=b"demo")
+drbg_out = drbg.random_bytes(32)
+print(f"  HMAC_DRBG output: {drbg_out.hex()[:16]}...")
+
+# Reseed with fresh entropy
+drbg.reseed(entropy_input=b"\xff" * 32)
+drbg_out2 = drbg.random_bytes(32)
+print(f"  After reseed: {drbg_out2.hex()[:16]}...")
+
+# DigitalURandom — full entropy pipeline (no os.urandom)
+rng = DigitalURandom(strict_hardware=False)
+rng_out = rng.urandom(32)
+print(f"  DigitalURandom: {rng_out.hex()[:16]}...")
+print(f"  Entropy sources: {len(rng.report['events'])} collected")
+print()
+
+# 9. Secure Random & Memory
+print("[9] Utilities")
 from crypto_standalone import random_bytes, random_below, SecureBytes, secure_zero
 
 rand = random_bytes(16)
@@ -128,8 +149,8 @@ secure_zero(data)
 print(f"  Zeroed: {data == bytearray(len(data))}")
 print()
 
-# 9. Domain-Separated Hashing
-print("[9] Tagged Hashing (Domain Separation)")
+# 10. Domain-Separated Hashing
+print("[10] Tagged Hashing (Domain Separation)")
 from crypto_standalone import tagged_hash
 
 tag1 = tagged_hash("crypto_standalone:v2:signatures", b"data")

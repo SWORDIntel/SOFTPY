@@ -2,6 +2,11 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project.urls]
+Homepage = "https://github.com/SWORDIntel/SOFTPY"
+Repository = "https://github.com/SWORDIntel/SOFTPY"
+Issues = "https://github.com/SWORDIntel/SOFTPY/issues"
+
 [project]
 name = "crypto-standalone"
 version = "2.0.0"
@@ -23,14 +28,18 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Security :: Cryptography",
     "Operating System :: OS Independent",
+    "Typing :: Typed",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "hypothesis>=6.0"]
+dev = ["pytest>=7.0", "hypothesis>=6.0", "pytest-cov>=4.0", "flake8>=6.0"]
 bench = ["pytest-benchmark>=4.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+crypto_standalone = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -38,6 +47,21 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["crypto_standalone"]
+branch = true
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 70
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__",
+    "raise NotImplementedError",
+    "except ImportError",
+]
 
 [tool.mypy]
 python_version = "3.7"

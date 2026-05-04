@@ -114,7 +114,6 @@ def _point_mul(curve: _Curve, k: int, P: tuple[int, int]) -> tuple[int, int] | N
 
 def _deterministic_k(curve: _Curve, private_key: int, message_hash: bytes) -> int:
     """RFC 6979 deterministic k generation (simplified)."""
-    import hmac as _hmac_mod
     try:
         from ..hashing.sha2 import hmac_sha256
     except ImportError:

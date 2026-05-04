@@ -1,5 +1,0 @@
-include LICENSE
-include README.md
-include THREAT_MODEL.md
-recursive-include src/crypto_standalone *.py
-recursive-include tests *.py *.json
