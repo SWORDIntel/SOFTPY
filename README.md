@@ -5,7 +5,7 @@
 [![Tests](https://github.com/SWORDIntel/SOFTPY/actions/workflows/test.yml/badge.svg)](https://github.com/SWORDIntel/SOFTPY/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](pyproject.toml)
-[![252 tests](https://img.shields.io/badge/tests-252%20passing-brightgreen.svg)](tests/)
+[![290 tests](https://img.shields.io/badge/tests-290%20passing-brightgreen.svg)](tests/)
 [![Zero deps](https://img.shields.io/badge/dependencies-zero-orange.svg)](pyproject.toml)
 
 ## Features

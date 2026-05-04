@@ -10,7 +10,7 @@ python selftest.py
 
 Covers: SHA-2, SHA-3, AEAD (GCM + ChaCha20-Poly1305), KDF, RSA, Ed25519, X25519, P-curves, utilities.
 
-### Pytest Suite (252 tests)
+### Pytest Suite (290 tests)
 
 ```bash
 pip install -e ".[dev]"   # installs pytest + hypothesis
@@ -21,8 +21,8 @@ pytest tests/ -v          # unit + adversarial
 
 | Category | Count | Coverage |
 |----------|-------|----------|
-| Unit tests | 66 | AES, hashes, RSA, ECC, KDF/utils |
-| Wycheproof adversarial | 186 | Tag tampering, AAD manipulation, nonce reuse, signature malleability, invalid scalars, low-order points, attack simulations, property-based fuzzing |
+| Unit tests | 92 | AES, hashes, RSA, ECC, KDF, RNG/utils |
+| Wycheproof adversarial | 198 | Tag tampering, AAD manipulation, nonce reuse, signature malleability, invalid scalars, low-order points, RNG vectors, attack simulations, property-based fuzzing |
 
 ### CI/CD
 
