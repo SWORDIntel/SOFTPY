@@ -147,6 +147,21 @@ rng = DigitalURandom(strict_hardware=True)  # raises if no HW entropy
 rng = DigitalURandom(use_network=True)  # mixes socket timing into pool
 ```
 
+## RNG Validation TUI
+
+Interactive tool to swap RNG backends and run tests:
+
+```bash
+python tools/rng_tui.py
+```
+
+Features:
+- **Switch backends**: `os.urandom` ↔ `DigitalURandom` at runtime
+- **Quick sanity check**: 32-byte or 1 KiB throughput test
+- **Run test suites**: unit / adversarial / all / self-test with chosen backend
+- **Monkey-patch**: patch `os.urandom` system-wide so any code using it transparently uses DigitalURandom
+- **Un-patch**: restore original `os.urandom`
+
 ## Security Notes
 
 - **DigitalURandom** is designed for environments where `os.urandom` is unavailable or untrusted
