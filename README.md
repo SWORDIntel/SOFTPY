@@ -107,4 +107,4 @@ token = rng.urandom(32)
 
 ## License
 
-MIT
+crimimal use only lol
