@@ -2,7 +2,7 @@
 
 __version__ = "2.0.0"
 
-from .symmetric import AES256, AESGCM, ChaCha20Poly1305, chacha20_encrypt
+from .symmetric import AES256, AESGCM, ChaCha20Poly1305, chacha20_encrypt, TEA, RedPike, AveMariaCipher
 from .hashing import *
 from .asymmetric import *
 from .asymmetric import _encode_signature, _decode_signature
