@@ -49,3 +49,20 @@ class TestValidation:
             TEA(b"\x00" * 16).encrypt_block(b"\x00")
         with pytest.raises(ValueError):
             RedPike(b"\x00" * 8).decrypt_block(b"\x00")
+
+
+class TestModularUsageAndCompatibility:
+    def test_single_implementation_import(self):
+        from crypto_standalone.symmetric.tea import TEA as LegacyTEA
+
+        c = LegacyTEA(b"\x00" * 16)
+        pt = b"\x00" * 8
+        assert c.decrypt_block(c.encrypt_block(pt)) == pt
+
+    def test_python37_syntax_compatibility(self):
+        import ast
+        from pathlib import Path
+
+        for rel in ("tea.py", "redpike.py", "avemaria.py", "legacy_ciphers.py"):
+            source = Path("src/crypto_standalone/symmetric").joinpath(rel).read_text()
+            ast.parse(source, feature_version=(3, 7))
