@@ -14,6 +14,30 @@ try:
 except ImportError:
     HAS_HYPOTHESIS = False
 
+    class _HypothesisStub:
+        @staticmethod
+        def binary(**_kwargs):
+            return object()
+
+        @staticmethod
+        def integers(**_kwargs):
+            return object()
+
+    def given(*_args, **_kwargs):
+        def _decorator(fn):
+            return fn
+        return _decorator
+
+    def settings(*_args, **_kwargs):
+        def _decorator(fn):
+            return fn
+        return _decorator
+
+    def assume(_condition):
+        return None
+
+    st = _HypothesisStub()
+
 pytestmark = pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
 
 from crypto_standalone import AESGCM, ChaCha20Poly1305, sha256, sha512

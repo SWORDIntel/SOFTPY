@@ -1,6 +1,13 @@
 """Comprehensive self-test suite for military-grade crypto toolkit."""
 
 import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent
+SRC_DIR = REPO_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
 
 def test_hashes():
     from crypto_standalone import sha256_hex, sha384_hex, sha512_hex, hmac_sha256, tagged_hash
