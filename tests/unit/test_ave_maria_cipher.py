@@ -25,6 +25,10 @@ class TestAveMariaCipher:
         c = AveMariaCipher(table_mode="fixed")
         assert c.encrypt("abc") == "<0:altissimus><0:benignitas><0:caritas>"
 
+    def test_legacy_token_decode(self):
+        c = AveMariaCipher()
+        assert c.decrypt("<ave><maria><gratia>") == "abc"
+
     def test_invalid_mode(self):
         with pytest.raises(ValueError):
             AveMariaCipher(table_mode="random")
@@ -32,6 +36,6 @@ class TestAveMariaCipher:
     def test_type_errors(self):
         c = AveMariaCipher()
         with pytest.raises(TypeError):
-            c.encrypt(b"abc")
+            c.encrypt(b"abc")  # type: ignore[arg-type]
         with pytest.raises(TypeError):
-            c.decrypt(123)
+            c.decrypt(123)  # type: ignore[arg-type]
