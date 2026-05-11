@@ -87,6 +87,22 @@ rng = DigitalURandom()  # direct access
 token = rng.urandom(32)
 ```
 
+
+
+### Legacy Ciphers (Interoperability Only)
+
+```python
+# Import only one implementation/module when needed
+from crypto_standalone.symmetric.tea import TEA
+from crypto_standalone.symmetric.redpike import RedPike
+from crypto_standalone.symmetric.avemaria import AveMariaCipher
+
+# Backward-compatible aggregate import still works
+from crypto_standalone.symmetric.legacy_ciphers import TEA, RedPike, AveMariaCipher
+```
+
+These legacy ciphers are for compatibility/migration workflows and are not recommended for new system designs.
+
 ## Algorithm Recommendations
 
 | Purpose | Recommended | Avoid |
