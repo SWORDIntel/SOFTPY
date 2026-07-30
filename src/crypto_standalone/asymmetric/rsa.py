@@ -172,13 +172,13 @@ def _miller_rabin_base2(n: int) -> bool:
         return True
     if n % 2 == 0:
         return False
-    
+
     d = n - 1
     s = 0
     while d % 2 == 0:
         d //= 2
         s += 1
-    
+
     x = pow(2, d, n)
     if x == 1 or x == n - 1:
         return True
@@ -215,7 +215,7 @@ def _strong_lucas_test(n: int) -> bool:
         return True
     if n % 2 == 0:
         return False
-    
+
     D = 5
     while True:
         if _jacobi(D, n) == -1:
@@ -223,14 +223,14 @@ def _strong_lucas_test(n: int) -> bool:
         D = -D - 2 if D > 0 else -D + 2
         if abs(D) > 10000:
             return False
-    
+
     Q = (1 - D) // 4
     d = n + 1
     s = 0
     while d % 2 == 0:
         d //= 2
         s += 1
-    
+
     def _lucas_chain(k: int) -> tuple[int, int]:
         U, V, Q_k = 0, 2, 1
         for bit in bin(k)[2:]:
@@ -250,17 +250,17 @@ def _strong_lucas_test(n: int) -> bool:
                 Q_k = (Q_k * Q) % n
                 U, V = U_new, V_new
         return U, V
-    
+
     U, V = _lucas_chain(d)
     if U == 0 or V == 0:
         return True
-    
+
     for _ in range(s):
         V = (V * V - 2 * pow(Q, d * (2 ** _), n)) % n
         if V == 0:
             return True
         d *= 2
-    
+
     return False
 
 
@@ -273,7 +273,7 @@ def _is_probable_prime(n: int) -> bool:
             return True
         if n % p == 0:
             return False
-    
+
     if not _miller_rabin_base2(n):
         return False
     if not _strong_lucas_test(n):

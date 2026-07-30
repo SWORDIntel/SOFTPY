@@ -95,12 +95,12 @@ def ed25519_keygen(seed: bytes | None = None) -> tuple[bytes, bytes]:
         seed = random_bytes(32)
     if len(seed) != 32:
         raise ValueError("seed must be 32 bytes")
-    
+
     h = sha512(seed)
     a = int.from_bytes(h[:32], "little")
     a &= (1 << 254) - 8
     a |= (1 << 254)
-    
+
     A = _edwards_scalarmult(_B, a)
     public_key = _point_compress(A)
     return seed, public_key
@@ -113,22 +113,22 @@ def ed25519_sign(message: bytes, private_key: bytes) -> bytes:
     """
     if len(private_key) != 32:
         raise ValueError("private key must be 32 bytes")
-    
+
     h = sha512(private_key)
     a = int.from_bytes(h[:32], "little")
     a &= (1 << 254) - 8
     a |= (1 << 254)
-    
+
     A = _edwards_scalarmult(_B, a)
     public_key = _point_compress(A)
-    
+
     r = _hint(h[32:] + message)
     R = _edwards_scalarmult(_B, r)
     R_bytes = _point_compress(R)
-    
+
     k = _hint(R_bytes + public_key + message)
     s = (r + k * a) % _L
-    
+
     return R_bytes + s.to_bytes(32, "little")
 
 
@@ -141,21 +141,21 @@ def ed25519_verify(message: bytes, signature: bytes, public_key: bytes) -> bool:
         return False
     if len(public_key) != 32:
         return False
-    
+
     try:
         R_bytes = signature[:32]
         s = int.from_bytes(signature[32:], "little")
         if s >= _L:
             return False
-        
+
         R = _point_decompress(R_bytes)
         A = _point_decompress(public_key)
-        
+
         k = _hint(R_bytes + public_key + message)
-        
+
         lhs = _edwards_scalarmult(_B, s)
         rhs = _edwards_add(R, _edwards_scalarmult(A, k))
-        
+
         return lhs == rhs
     except Exception:
         return False

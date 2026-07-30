@@ -178,10 +178,10 @@ def test_aes_gcm_tamper_detection(plaintext, aad, flip_pos):
     key = os.urandom(32)
     gcm = AESGCM(key)
     blob = gcm.encrypt_blob(plaintext, aad=aad)
-    
+
     if flip_pos >= len(blob):
         return  # skip if flip position is beyond blob
-    
+
     tampered = bytearray(blob)
     tampered[flip_pos] ^= 0x01
     with pytest.raises(ValueError):

@@ -4,7 +4,8 @@
 
 - **SHA-2**: Bit-level FIPS 180-4 (32-bit and 64-bit word versions)
 - **SHA-3/Keccak**: Keccak-f[1600] sponge permutation, 24 rounds
-- **AES-256**: Rijndael with 14 rounds, GF(2^8) arithmetic
+- **AES**: Rijndael supporting 128/192/256-bit keys, GF(2^8) arithmetic
+- **AES-IGE**: Infinite Garble Extension mode with 32-byte IV
 - **GCM**: GHASH in GF(2^128), CTR mode encryption
 - **ChaCha20**: 20-round quarter-function, Poly1305 over GF(2^130-5)
 - **RSA**: Baillie-PSW primality, CRT-based decryption, small-prime sieve

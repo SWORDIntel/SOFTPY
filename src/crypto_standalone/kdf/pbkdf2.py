@@ -30,7 +30,7 @@ def hkdf_expand(prk: bytes, info: bytes | None, length: int, hash_fn=None) -> by
     hash_len = len(hash_fn(b"", b""))
     if length > 255 * hash_len:
         raise ValueError("output length too large")
-    
+
     n = (length + hash_len - 1) // hash_len
     okm = b""
     t = b""
@@ -64,14 +64,14 @@ def pbkdf2_hmac(password: bytes, salt: bytes, iterations: int, dklen: int, hash_
         hash_fn = hmac_sha256
     if iterations < 1:
         raise ValueError("iterations must be >= 1")
-    
+
     hash_len = len(hash_fn(b"", b""))
     if dklen > (2**32 - 1) * hash_len:
         raise ValueError("derived key too long")
-    
+
     num_blocks = (dklen + hash_len - 1) // hash_len
     dk = b""
-    
+
     for block_num in range(1, num_blocks + 1):
         u = hash_fn(password, salt + block_num.to_bytes(4, "big"))
         result = int.from_bytes(u, "big")
@@ -79,7 +79,7 @@ def pbkdf2_hmac(password: bytes, salt: bytes, iterations: int, dklen: int, hash_
             u = hash_fn(password, u)
             result ^= int.from_bytes(u, "big")
         dk += result.to_bytes(hash_len, "big")
-    
+
     return dk[:dklen]
 
 

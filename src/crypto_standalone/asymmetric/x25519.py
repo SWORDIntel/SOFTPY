@@ -29,28 +29,28 @@ def _x25519_scalarmult(k: bytes, u: bytes) -> bytes:
     """
     if len(k) != 32 or len(u) != 32:
         raise ValueError("k and u must be 32 bytes")
-    
+
     k_scalar = int.from_bytes(k, "little")
     k_scalar &= (1 << 255) - 1
     k_scalar &= ~7
     k_scalar |= (1 << 254)
-    
+
     u_coord = int.from_bytes(u, "little") % _P
-    
+
     x_1 = u_coord
     x_2 = 1
     z_2 = 0
     x_3 = u_coord
     z_3 = 1
     swap = 0
-    
+
     for t in range(254, -1, -1):
         k_t = (k_scalar >> t) & 1
         swap ^= k_t
         x_2, x_3 = _cswap(swap, x_2, x_3)
         z_2, z_3 = _cswap(swap, z_2, z_3)
         swap = k_t
-        
+
         A = (x_2 + z_2) % _P
         AA = (A * A) % _P
         B = (x_2 - z_2) % _P
@@ -64,10 +64,10 @@ def _x25519_scalarmult(k: bytes, u: bytes) -> bytes:
         z_3 = (x_1 * ((DA - CB) ** 2)) % _P
         x_2 = (AA * BB) % _P
         z_2 = (E * (AA + _A24 * E)) % _P
-    
+
     x_2, x_3 = _cswap(swap, x_2, x_3)
     z_2, z_3 = _cswap(swap, z_2, z_3)
-    
+
     result = (x_2 * pow(z_2, _P - 2, _P)) % _P
     return result.to_bytes(32, "little")
 
@@ -81,7 +81,7 @@ def x25519_keygen(private_key: bytes | None = None) -> tuple[bytes, bytes]:
         private_key = random_bytes(32)
     if len(private_key) != 32:
         raise ValueError("private key must be 32 bytes")
-    
+
     basepoint = bytes([9]) + bytes(31)
     public_key = _x25519_scalarmult(private_key, basepoint)
     return private_key, public_key
@@ -96,7 +96,7 @@ def x25519(private_key: bytes, public_key: bytes) -> bytes:
         raise ValueError("private key must be 32 bytes")
     if len(public_key) != 32:
         raise ValueError("public key must be 32 bytes")
-    
+
     return _x25519_scalarmult(private_key, public_key)
 
 

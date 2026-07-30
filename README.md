@@ -10,7 +10,7 @@
 
 ## Features
 
-- **AES-256-GCM** (NIST SP 800-38D), **ChaCha20-Poly1305** (RFC 8439), AES-256-CBC/CTR
+- **AES-256-GCM** (NIST SP 800-38D), **ChaCha20-Poly1305** (RFC 8439), AES-256-CBC/CTR, **AES-IGE**
 - **SHA-256/384/512** (FIPS 180-4), **SHA-3/SHAKE** (FIPS 202), HMAC, tagged hashing
 - **HKDF** (RFC 5869), **PBKDF2** (RFC 2898, 600k+ iterations)
 - **RSA** (OAEP, PSS, Baillie-PSW primality), **Ed25519** (RFC 8032), **X25519** (RFC 7748), **P-256/P-384** (ECDSA + ECDH)
@@ -88,6 +88,20 @@ token = rng.urandom(32)
 ```
 
 
+
+### AES-IGE Encryption
+
+```python
+from crypto_standalone import aes_ige_encrypt, aes_ige_decrypt
+
+key = b"\x00" * 32
+iv = b"\x00" * 32 # 32-byte IV (C_0 || P_0)
+plaintext = b"blockaligneddata" # Must be exactly a multiple of 16 bytes
+
+# AES-IGE provides confidentiality only. Must be paired with an authentication mechanism!
+ciphertext = aes_ige_encrypt(plaintext, key, iv)
+assert aes_ige_decrypt(ciphertext, key, iv) == plaintext
+```
 
 ### Legacy Ciphers (Interoperability Only)
 

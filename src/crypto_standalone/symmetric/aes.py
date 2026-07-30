@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
 
 
@@ -369,7 +368,7 @@ def _inv_mix_columns(state: list[list[int]]) -> None:
 
 def _add_round_key(state: list[list[int]], rk: bytes) -> None:
     for c in range(4):
-        w = int.from_bytes(rk[4 * c: 4 * (c + 1)], "big")
+        w = int.from_bytes(rk[4 * c : 4 * (c + 1)], "big")
         for r in range(4):
             state[r][c] ^= (w >> (24 - 8 * r)) & 0xFF
 
@@ -380,19 +379,23 @@ def _rot_word(w: int) -> int:
 
 def _sub_word(w: int) -> int:
     return (
-        (SBOX[(w >> 24) & 0xFF] << 24)
-        | (SBOX[(w >> 16) & 0xFF] << 16)
-        | (SBOX[(w >> 8) & 0xFF] << 8)
-        | SBOX[w & 0xFF]
+        (SBOX[(w >> 24) & 0xFF] << 24) | (SBOX[(w >> 16) & 0xFF] << 16) | (SBOX[(w >> 8) & 0xFF] << 8) | SBOX[w & 0xFF]
     )
 
 
-def _key_expand(key: bytes) -> list[bytes]:
-    if len(key) != 32:
-        raise ValueError("AES-256 requires 32-byte key")
+def _key_expand(key: bytes) -> tuple[int, list[bytes]]:
+    if len(key) not in (16, 24, 32):
+        raise ValueError("AES key must be 16, 24, or 32 bytes")
+
     nb = 4
-    nk = 8
-    nr = 14
+    nk = len(key) // 4
+    if nk == 4:
+        nr = 10
+    elif nk == 6:
+        nr = 12
+    else:
+        nr = 14
+
     w = [0] * (nb * (nr + 1))
 
     for i in range(nk):
@@ -402,7 +405,7 @@ def _key_expand(key: bytes) -> list[bytes]:
         temp = w[i - 1]
         if i % nk == 0:
             temp = _sub_word(_rot_word(temp)) ^ (RCON[i // nk - 1] << 24)
-        elif i % nk == 4:
+        elif nk > 6 and i % nk == 4:
             temp = _sub_word(temp)
         w[i] = w[i - nk] ^ temp
 
@@ -412,7 +415,7 @@ def _key_expand(key: bytes) -> list[bytes]:
         for c in range(4):
             rk.extend(w[4 * r + c].to_bytes(4, "big"))
         round_keys.append(bytes(rk))
-    return round_keys
+    return nr, round_keys
 
 
 def _xor_block(a: bytes, b: bytes) -> bytes:
@@ -437,14 +440,14 @@ def _unpad_pkcs7(data: bytes) -> bytes:
     return data[:-n]
 
 
-@dataclass(frozen=True)
-class AES256:
-    key: bytes
+class AES:
+    block_size = 16
 
-    def __post_init__(self) -> None:
-        if len(self.key) != 32:
-            raise ValueError("key must be 32 bytes")
-        object.__setattr__(self, "_rk", _key_expand(self.key))
+    def __init__(self, key: bytes) -> None:
+        if len(key) not in (16, 24, 32):
+            raise ValueError("AES key must be 16, 24, or 32 bytes")
+        self.key = key
+        self._nr, self._rk = _key_expand(self.key)
 
     @property
     def _round_keys(self) -> list[bytes]:
@@ -457,14 +460,14 @@ class AES256:
         rks = self._round_keys
 
         _add_round_key(state, rks[0])
-        for round_idx in range(1, 14):
+        for round_idx in range(1, self._nr):
             _sub_bytes(state)
             _shift_rows(state)
             _mix_columns(state)
             _add_round_key(state, rks[round_idx])
         _sub_bytes(state)
         _shift_rows(state)
-        _add_round_key(state, rks[14])
+        _add_round_key(state, rks[self._nr])
         return _state_to_bytes(state)
 
     def decrypt_block(self, block: bytes) -> bytes:
@@ -473,8 +476,8 @@ class AES256:
         state = _bytes_to_state(block)
         rks = self._round_keys
 
-        _add_round_key(state, rks[14])
-        for round_idx in range(13, 0, -1):
+        _add_round_key(state, rks[self._nr])
+        for round_idx in range(self._nr - 1, 0, -1):
             _inv_shift_rows(state)
             _inv_sub_bytes(state)
             _add_round_key(state, rks[round_idx])
@@ -542,3 +545,10 @@ class AES256:
             out.extend(_xor_block(block, keystream[: len(block)]))
             counter += 1
         return bytes(out)
+
+
+class AES256(AES):
+    def __init__(self, key: bytes) -> None:
+        if len(key) != 32:
+            raise ValueError("key must be 32 bytes")
+        super().__init__(key)

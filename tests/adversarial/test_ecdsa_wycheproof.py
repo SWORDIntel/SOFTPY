@@ -27,11 +27,11 @@ class TestECDSASignatureMalleability:
         msg = b"test"
         sig = sk.sign(msg)
         r, s = _decode_signature(sig)
-        
+
         # Create malleable signature: (r, -s mod n)
         s_neg = (-s) % P256.n
         sig_malleable = _encode_signature(r, s_neg)
-        
+
         # Both should verify (standard ECDSA without low-S constraint)
         assert sk.public_key.verify(msg, sig)
         assert sk.public_key.verify(msg, sig_malleable)

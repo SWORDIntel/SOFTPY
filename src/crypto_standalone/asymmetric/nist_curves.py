@@ -65,16 +65,16 @@ def _point_add(curve: _Curve, P: tuple[int, int] | None, Q: tuple[int, int] | No
         return Q
     if Q is None:
         return P
-    
+
     x1, y1 = P
     x2, y2 = Q
-    
+
     if x1 == x2:
         if y1 == y2:
             return _point_double(curve, P)
         else:
             return None
-    
+
     s = ((y2 - y1) * _modinv((x2 - x1) % curve.p, curve.p)) % curve.p
     x3 = (s * s - x1 - x2) % curve.p
     y3 = (s * (x1 - x3) - y1) % curve.p
@@ -86,7 +86,7 @@ def _point_double(curve: _Curve, P: tuple[int, int]) -> tuple[int, int] | None:
     x, y = P
     if y == 0:
         return None
-    
+
     s = ((3 * x * x + curve.a) * _modinv((2 * y) % curve.p, curve.p)) % curve.p
     x3 = (s * s - 2 * x) % curve.p
     y3 = (s * (x - x3) - y) % curve.p
@@ -99,16 +99,16 @@ def _point_mul(curve: _Curve, k: int, P: tuple[int, int]) -> tuple[int, int] | N
         return None
     if k < 0:
         raise ValueError("scalar must be non-negative")
-    
+
     result = None
     addend = P
-    
+
     while k:
         if k & 1:
             result = _point_add(curve, result, addend)
         addend = _point_double(curve, addend) if addend else None
         k >>= 1
-    
+
     return result
 
 
@@ -121,22 +121,22 @@ def _deterministic_k(curve: _Curve, private_key: int, message_hash: bytes) -> in
             from hashes import hmac_sha256
         except ImportError:
             from sha2 import hmac_sha256
-    
+
     h = int.from_bytes(message_hash, "big")
     x = private_key
     q = curve.n
-    
+
     h1 = h.to_bytes((curve.n.bit_length() + 7) // 8, "big")
     x_bytes = x.to_bytes((curve.n.bit_length() + 7) // 8, "big")
-    
+
     v = b"\x01" * 32
     k_val = b"\x00" * 32
-    
+
     k_val = hmac_sha256(k_val, v + b"\x00" + x_bytes + h1)
     v = hmac_sha256(k_val, v)
     k_val = hmac_sha256(k_val, v + b"\x01" + x_bytes + h1)
     v = hmac_sha256(k_val, v)
-    
+
     while True:
         v = hmac_sha256(k_val, v)
         k_candidate = int.from_bytes(v, "big")
@@ -148,85 +148,85 @@ def _deterministic_k(curve: _Curve, private_key: int, message_hash: bytes) -> in
 
 class ECDSAPrivateKey:
     """ECDSA private key."""
-    
+
     def __init__(self, curve: _Curve, d: int):
         if not (1 <= d < curve.n):
             raise ValueError("invalid private key")
         self.curve = curve
         self.d = d
         self._public_key = None
-    
+
     @property
     def public_key(self) -> 'ECDSAPublicKey':
         if self._public_key is None:
             Q = _point_mul(self.curve, self.d, self.curve.g)
             self._public_key = ECDSAPublicKey(self.curve, Q)
         return self._public_key
-    
+
     def sign(self, message: bytes, hash_fn=None) -> bytes:
         """Sign a message. Returns DER-encoded signature."""
         if hash_fn is None:
             hash_fn = sha256 if self.curve.name == "P-256" else sha384
-        
+
         z = int.from_bytes(hash_fn(message), "big")
         z = z % self.curve.n
-        
+
         k = _deterministic_k(self.curve, self.d, hash_fn(message))
         R = _point_mul(self.curve, k, self.curve.g)
         if R is None:
             raise RuntimeError("signature generation failed")
-        
+
         r = R[0] % self.curve.n
         if r == 0:
             raise RuntimeError("signature generation failed")
-        
+
         s = (_modinv(k, self.curve.n) * (z + r * self.d)) % self.curve.n
         if s == 0:
             raise RuntimeError("signature generation failed")
-        
+
         return _encode_signature(r, s)
-    
+
     def ecdh(self, public_key: 'ECDSAPublicKey') -> bytes:
         """Perform ECDH key agreement."""
         if self.curve.name != public_key.curve.name:
             raise ValueError("curve mismatch")
-        
+
         shared_point = _point_mul(self.curve, self.d, public_key.Q)
         if shared_point is None:
             raise ValueError("ECDH failed")
-        
+
         coord_bytes = (self.curve.p.bit_length() + 7) // 8
         return shared_point[0].to_bytes(coord_bytes, "big")
 
 
 class ECDSAPublicKey:
     """ECDSA public key."""
-    
+
     def __init__(self, curve: _Curve, Q: tuple[int, int]):
         self.curve = curve
         self.Q = Q
-    
+
     def verify(self, message: bytes, signature: bytes, hash_fn=None) -> bool:
         """Verify an ECDSA signature."""
         if hash_fn is None:
             hash_fn = sha256 if self.curve.name == "P-256" else sha384
-        
+
         try:
             r, s = _decode_signature(signature)
             if not (1 <= r < self.curve.n and 1 <= s < self.curve.n):
                 return False
-            
+
             z = int.from_bytes(hash_fn(message), "big")
             z = z % self.curve.n
-            
+
             w = _modinv(s, self.curve.n)
             u1 = (z * w) % self.curve.n
             u2 = (r * w) % self.curve.n
-            
+
             point = _point_add(self.curve, _point_mul(self.curve, u1, self.curve.g), _point_mul(self.curve, u2, self.Q))
             if point is None:
                 return False
-            
+
             return point[0] % self.curve.n == r
         except Exception:
             return False
@@ -242,7 +242,7 @@ def _encode_signature(r: int, s: int) -> bytes:
         if b[0] & 0x80:
             b = b"\x00" + b
         return b"\x02" + bytes([len(b)]) + b
-    
+
     r_enc = _encode_int(r)
     s_enc = _encode_int(s)
     seq = r_enc + s_enc
@@ -253,7 +253,7 @@ def _decode_signature(sig: bytes) -> tuple[int, int]:
     """Decode DER signature to (r, s)."""
     if sig[0] != 0x30:
         raise ValueError("invalid signature")
-    
+
     idx = 2
     if sig[idx] != 0x02:
         raise ValueError("invalid signature")
@@ -262,14 +262,14 @@ def _decode_signature(sig: bytes) -> tuple[int, int]:
     idx += 1
     r = int.from_bytes(sig[idx : idx + r_len], "big")
     idx += r_len
-    
+
     if sig[idx] != 0x02:
         raise ValueError("invalid signature")
     idx += 1
     s_len = sig[idx]
     idx += 1
     s = int.from_bytes(sig[idx : idx + s_len], "big")
-    
+
     return r, s
 
 
