@@ -542,3 +542,51 @@ class AES256:
             out.extend(_xor_block(block, keystream[: len(block)]))
             counter += 1
         return bytes(out)
+
+    def encrypt_ige(self, plaintext: bytes, iv: bytes) -> bytes:
+        if len(iv) != 32:
+            raise ValueError("IGE mode requires a 32-byte IV")
+        if len(plaintext) % 16 != 0:
+            raise ValueError("plaintext length must be a multiple of 16 bytes")
+
+        iv1 = iv[:16]
+        iv2 = iv[16:]
+
+        out = bytearray()
+        prev_c = iv1
+        prev_p = iv2
+
+        for i in range(0, len(plaintext), 16):
+            p = plaintext[i : i + 16]
+            x = _xor_block(p, prev_c)
+            c_temp = self.encrypt_block(x)
+            c = _xor_block(c_temp, prev_p)
+            out.extend(c)
+            prev_p = p
+            prev_c = c
+
+        return bytes(out)
+
+    def decrypt_ige(self, ciphertext: bytes, iv: bytes) -> bytes:
+        if len(iv) != 32:
+            raise ValueError("IGE mode requires a 32-byte IV")
+        if len(ciphertext) % 16 != 0:
+            raise ValueError("ciphertext length must be a multiple of 16 bytes")
+
+        iv1 = iv[:16]
+        iv2 = iv[16:]
+
+        out = bytearray()
+        prev_c = iv1
+        prev_p = iv2
+
+        for i in range(0, len(ciphertext), 16):
+            c = ciphertext[i : i + 16]
+            x = _xor_block(c, prev_p)
+            p_temp = self.decrypt_block(x)
+            p = _xor_block(p_temp, prev_c)
+            out.extend(p)
+            prev_p = p
+            prev_c = c
+
+        return bytes(out)
