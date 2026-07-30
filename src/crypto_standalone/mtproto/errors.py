@@ -1,3 +1,6 @@
+class MTProtoError(Exception):
+    """Base class for MTProto errors."""
+    pass
 """MTProto exception hierarchy."""
 
 class MTProtoFramingError(Exception):

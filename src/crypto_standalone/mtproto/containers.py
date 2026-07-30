@@ -1,3 +1,5 @@
+# Containers for MTProto messages
+pass
 import struct
 from dataclasses import dataclass
 from typing import List
