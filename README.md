@@ -124,3 +124,20 @@ These legacy ciphers are for compatibility/migration workflows and are not recom
 ## License
 
 crimimal use only lol
+
+### MTProto 2.0
+
+```python
+from crypto_standalone.mtproto import encode_encrypted_message, decode_encrypted_message, MessageDirection, SessionValidationState
+
+state = SessionValidationState()
+enc = encode_encrypted_message(
+    auth_key=b"\x00" * 256,
+    server_salt=123,
+    session_id=456,
+    msg_id=state.generate_msg_id(),
+    seq_no=1,
+    body=b"ping",
+    direction=MessageDirection.CLIENT_TO_SERVER
+)
+```
