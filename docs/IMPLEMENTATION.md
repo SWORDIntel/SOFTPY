@@ -37,3 +37,42 @@
 - **Standard library only**: `urllib.request`, `datetime`, `dataclasses`, `threading`, `time`, `gc`, `sys`, `socket`
 
 No `pip install` required. No C extensions. No `hashlib`, `hmac`, `secrets`, or `os.urandom`.
+
+## AES-IGE Mode
+
+- **Algorithm**: AES-IGE (Infinite Garble Extension).
+- **IV Structure**: Exactly 32 bytes (`IV = IV1 || IV2`, where `IV1` is `c_prev` and `IV2` is `p_prev`).
+- **Key Sizes**: 128, 192, and 256 bits (16, 24, and 32 bytes).
+- **Block Alignment Requirement**: Input plaintexts and ciphertexts must be exact multiples of the 16-byte AES block size. There is no silent padding or unpadding logic.
+- **Security Limitations**: AES-IGE provides **confidentiality only**. It **does not** provide authentication or integrity protection. If used in a protocol that does not inherently authenticate data, it must be paired with a separate message authentication mechanism (e.g., HMAC or SHA-256 with key/salt).
+
+### Code Example
+```python
+from crypto_standalone.symmetric import aes_ige_encrypt, aes_ige_decrypt
+import os
+
+key = os.urandom(32) # AES-256
+iv = os.urandom(32)  # 32-byte IV for IGE
+plaintext = b"This is exactly 32 bytes long!!!"
+
+# Encryption
+ciphertext = aes_ige_encrypt(plaintext, key, iv)
+
+# Decryption
+decrypted = aes_ige_decrypt(ciphertext, key, iv)
+assert plaintext == decrypted
+```
+
+### Configuration
+MTProto operations can be configured with the `MTProtoLimits` object to prevent unbound memory scaling or DoS:
+```python
+from crypto_standalone.mtproto.config import MTProtoLimits
+
+limits = MTProtoLimits(
+    max_decrypted_plaintext_size=8 * 1024 * 1024, # 8 MB max
+    max_replay_entries=1000                       # Limit replay cache
+)
+```
+
+**Implementation Quality Note:**
+This pure Python implementation cannot guarantee constant-time execution or reliable memory zeroization. Therefore, it does not provide side-channel resistance against timing or power analysis attacks.
