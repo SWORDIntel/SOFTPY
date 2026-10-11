@@ -3,7 +3,6 @@
 **Military-grade cryptography** with zero external dependencies. NSA Suite B / CNSA 2.0 compliant algorithms implemented entirely in Python stdlib.
 
 [![Tests](https://github.com/SWORDIntel/SOFTPY/actions/workflows/test.yml/badge.svg)](https://github.com/SWORDIntel/SOFTPY/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](pyproject.toml)
 [![290 tests](https://img.shields.io/badge/tests-290%20passing-brightgreen.svg)](tests/)
 [![Zero deps](https://img.shields.io/badge/dependencies-zero-orange.svg)](pyproject.toml)
@@ -123,21 +122,5 @@ These legacy ciphers are for compatibility/migration workflows and are not recom
 
 ## License
 
-crimimal use only lol
+This project is licensed under the **SWORD Restricted Source Licence v1.0 (SRSL-1.0)**. Non-commercial use is permitted under its terms; commercial exploitation requires a separate written agreement. See [LICENSE](LICENSE).
 
-### MTProto 2.0
-
-```python
-from crypto_standalone.mtproto import encode_encrypted_message, decode_encrypted_message, MessageDirection, SessionValidationState
-
-state = SessionValidationState()
-enc = encode_encrypted_message(
-    auth_key=b"\x00" * 256,
-    server_salt=123,
-    session_id=456,
-    msg_id=state.generate_msg_id(),
-    seq_no=1,
-    body=b"ping",
-    direction=MessageDirection.CLIENT_TO_SERVER
-)
-```
