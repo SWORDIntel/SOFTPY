@@ -122,5 +122,5 @@ These legacy ciphers are for compatibility/migration workflows and are not recom
 
 ## License
 
-This project is licensed under the **SWORD Restricted Source Licence v1.0 (SRSL-1.0)**. Non-commercial use is permitted under its terms; commercial exploitation requires a separate written agreement. See [LICENSE](LICENSE).
+This project is licensed under the **SWORD Restricted Source Licence v1.1 (SRSL-1.1)**. Non-commercial use is permitted under its terms; commercial exploitation requires a separate written agreement. See [LICENSE](LICENSE) and [migration and historical MIT notes](SRSL_MIGRATION.md). Rights previously validly granted under earlier licences remain effective for those copies.
 
